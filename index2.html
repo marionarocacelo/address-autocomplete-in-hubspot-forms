@@ -1,0 +1,174 @@
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAo99_9VSmP_0ZARRMac5WShNMli2wDwlk&libraries=places&loading=async"></script>
+<script charset="utf-8" type="text/javascript" src="//js-eu1.hsforms.net/forms/embed/v2.js"></script>
+<script>
+  hbspt.forms.create({
+    portalId: "143188978",
+    formId: "534d2f79-df7d-4f6d-8974-aabfb6b110e9",
+    region: "eu1",
+    onFormReady: function($form) {
+      
+      // Select the address input. 
+      // HubSpot usually names the address field 'address'. 
+      // If yours is different, inspect the input and change 'input[name="address"]' below.
+      var addressInput = $form.find('input[name="address_complete"]')[0];
+      
+      if (addressInput) {
+        var doc = addressInput.ownerDocument;
+        var pacCss = [
+          'div.pac-container {',
+          '  background: #fff !important; background-color: #fff !important;',
+          '  border: 1px solid #ccc !important;',
+          '  border-radius: 6px !important;',
+          '  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;',
+          '  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;',
+          '  font-size: 14px !important;',
+          '  z-index: 2147483647 !important;',
+          '  padding: 4px 0 !important;',
+          '  margin-top: 2px !important;',
+          '  min-width: 200px !important;',
+          '}',
+          'div.pac-container .pac-item {',
+          '  padding: 10px 14px !important;',
+          '  cursor: pointer !important;',
+          '  color: #222 !important;',
+          '  border: none !important;',
+          '  line-height: 1.4 !important;',
+          '  font-size: 14px !important;',
+          '  font-family: inherit !important;',
+          '}',
+          'div.pac-container .pac-item:hover { background-color: #f0f0f0 !important; }',
+          'div.pac-container .pac-item-selected { background-color: #e3f2fd !important; }',
+          'div.pac-container .pac-icon { margin-right: 10px !important; }',
+          'div.pac-container .pac-item-query { font-size: 14px !important; color: #222 !important; margin-right: 0.4em !important; }',
+          'div.pac-container .pac-matched { font-weight: 600 !important; }',
+          'div.pac-container .pac-item > * + * { margin-left: 0.4em !important; }',
+          '.pac-address-error { color: #c0392b; font-size: 12px; margin-top: 6px; display: none; }',
+          '.pac-address-error.is-visible { display: block !important; }'
+        ].join('\n');
+
+        function injectPacStyles(targetDoc) {
+          if (!targetDoc) return;
+          var id = 'hubspot-pac-container-styles';
+          if (targetDoc.getElementById(id)) return;
+          var style = targetDoc.createElement('style');
+          style.id = id;
+          style.setAttribute('type', 'text/css');
+          style.textContent = pacCss;
+          (targetDoc.head || targetDoc.documentElement).appendChild(style);
+          if (targetDoc.body && targetDoc.body !== targetDoc.head) {
+            var style2 = targetDoc.createElement('style');
+            style2.id = id + '-body';
+            style2.setAttribute('type', 'text/css');
+            style2.textContent = pacCss;
+            targetDoc.body.appendChild(style2);
+          }
+        }
+
+        function applyPacInlineStyles(container) {
+          if (!container || container.getAttribute('data-hs-styled')) return;
+          container.setAttribute('data-hs-styled', '1');
+          container.style.cssText = 'background:#fff;background-color:#fff;border:1px solid #ccc;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;font-size:14px;z-index:2147483647;padding:4px 0;margin-top:2px;min-width:200px;';
+          var items = container.querySelectorAll('.pac-item');
+          for (var i = 0; i < items.length; i++) {
+            items[i].style.cssText = 'padding:10px 14px;cursor:pointer;color:#222;border:none;line-height:1.4;font-size:14px;';
+          }
+        }
+
+        function observePacContainer() {
+          var root = doc.body || doc.documentElement;
+          if (!root) return;
+          var check = function() {
+            var pac = doc.querySelector('.pac-container');
+            if (pac) {
+              applyPacInlineStyles(pac);
+              var obs = new MutationObserver(function(mutations) {
+                var c = doc.querySelector('.pac-container');
+                if (c) applyPacInlineStyles(c);
+              });
+              obs.observe(root, { childList: true, subtree: true });
+            }
+          };
+          check();
+          setTimeout(check, 500);
+          setTimeout(check, 1500);
+        }
+
+        injectPacStyles(doc);
+        if (window.self !== window.top && window.parent.document) injectPacStyles(window.parent.document);
+
+        function initAutocomplete() {
+          if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+            var autocomplete = new google.maps.places.Autocomplete(addressInput, {
+              types: ['address'],
+              fields: ['address_components', 'formatted_address']
+            });
+
+            addressInput._pacValid = false;
+            addressInput._pacSelectedValue = '';
+
+            autocomplete.addListener('place_changed', function() {
+              var place = autocomplete.getPlace();
+              if (place && place.formatted_address) {
+                addressInput._pacValid = true;
+                addressInput._pacSelectedValue = place.formatted_address;
+                addressInput.value = place.formatted_address;
+                hideAddressError();
+              }
+            });
+
+            addressInput.addEventListener('input', function() {
+              addressInput._pacValid = false;
+              addressInput._pacSelectedValue = '';
+              hideAddressError();
+            });
+
+            var errorEl = doc.createElement('div');
+            errorEl.className = 'pac-address-error';
+            errorEl.setAttribute('role', 'alert');
+            errorEl.textContent = 'Please select an address from the suggestions.';
+            if (addressInput.parentNode) {
+              addressInput.parentNode.insertBefore(errorEl, addressInput.nextSibling);
+            }
+
+            function hideAddressError() {
+              errorEl.classList.remove('is-visible');
+            }
+            function showAddressError() {
+              errorEl.classList.add('is-visible');
+              addressInput.focus();
+            }
+
+            var form = addressInput.form;
+            if (form) {
+              form.addEventListener('submit', function(e) {
+                var val = (addressInput.value || '').trim();
+                if (!val) return;
+                if (!addressInput._pacValid || val !== addressInput._pacSelectedValue) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  showAddressError();
+                  return false;
+                }
+                hideAddressError();
+              }, true);
+            }
+
+            observePacContainer();
+            addressInput.addEventListener('focus', function onFocus() {
+              setTimeout(function() {
+                var pac = doc.querySelector('.pac-container');
+                if (pac) applyPacInlineStyles(pac);
+              }, 100);
+              addressInput.removeEventListener('focus', onFocus);
+            }, true);
+          } else {
+            setTimeout(initAutocomplete, 100);
+          }
+        }
+
+        initAutocomplete();
+      }
+    }
+
+  });
+</script>
